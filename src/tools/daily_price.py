@@ -30,16 +30,17 @@ def normalize_file(market_type:str, file_path:str):
         text_arr = [i.translate({ord(' '): None, ord('='):None}).rstrip(',') 
             for i in text.split('\n') 
                 if (len(i.split('",')) >= 15 and len(i.split('",')) <= 17) or "代號" in i]
-        if market_type == define.MarketType.TPEX:             
-            if "代號" in text_arr[0]:
-                del text_arr[0] 
-
-            length = len(text_arr[0].split('",'))
-            if "證券代號" not in text_arr[0]:
-                if length == 15:
-                    text_arr.insert(0, "證券代號,證券名稱,收盤價,漲跌,開盤價,最高價,最低價,成交股數,成交金額,成交筆數,最後買價,最後賣價,發行股數,次日漲停價,次日跌停價")
-                elif length == 17:
-                    text_arr.insert(0, "證券代號,證券名稱,收盤價,漲跌,開盤價,最高價,最低價,均價,成交股數,成交金額,成交筆數,最後買價,最後賣價,發行股數,次日參考價,次日漲停價,次日跌停價")
+        if market_type == define.MarketType.TPEX:
+            if len(text_arr) > 0:             
+                if "代號" in text_arr[0]:
+                    del text_arr[0] 
+                if len(text_arr) > 0:
+                    length = len(text_arr[0].split('",')) if text_arr != None and len(text_arr) > 0 else 0
+                    if "證券代號" not in text_arr[0]:
+                        if length == 15:
+                            text_arr.insert(0, "證券代號,證券名稱,收盤價,漲跌,開盤價,最高價,最低價,成交股數,成交金額,成交筆數,最後買價,最後賣價,發行股數,次日漲停價,次日跌停價")
+                        elif length == 17:
+                            text_arr.insert(0, "證券代號,證券名稱,收盤價,漲跌,開盤價,最高價,最低價,均價,成交股數,成交金額,成交筆數,最後買價,最後賣價,發行股數,次日參考價,次日漲停價,次日跌停價")
         else:
             if "證券代號" not in text_arr[0]:
                 del text_arr[0] 
@@ -49,9 +50,11 @@ def normalize_file(market_type:str, file_path:str):
         f.truncate()
         f.write(initialize_text)
         f.close()
-        now_time = datetime.now()
-        mongo_mgr.upsert("stock", "Logger", {DB_KEY.LOG_DATE:now_time.strftime("%Y%m%d")}, 
-            {"$push":{DB_KEY.PARSE_LOG:"{0}: {1}".format(now_time.strftime("%Y%m%d-%H:%M:%S"), "normalize file:{0} finish".format(file_path))}})
+        # now_time = datetime.now()
+        # mongo_mgr.upsert("stock", "Logger", {DB_KEY.LOG_DATE:now_time.strftime("%Y%m%d")}, 
+        #     {"$push":{DB_KEY.PARSE_LOG:"{0}: {1}".format(now_time.strftime("%Y%m%d-%H:%M:%S"), "normalize file:{0} finish".format(file_path))}})
+    if len(text_arr) <= 0:
+        os.remove(file_path)
 
 
 def parse_file_to_db(market_type:str, file_path:str):
@@ -61,16 +64,17 @@ def parse_file_to_db(market_type:str, file_path:str):
     normalize_file(market_type, file_path)        
     df = pd.read_csv(file_path, header=0, index_col=0 )   
     file_date = os.path.basename(file_path).split('.')[0]    
+    year_month = file_date[:6]
     total = len(df.index)
     cnt = 0
     for index, series in df.iterrows():
         try:    
             series = df.loc[index]
             suspend = "--" in series["開盤價"]
-            o = float(series["開盤價"].replace(',','')) if not suspend else -1
-            h = float(series["最高價"].replace(',','')) if not suspend else -1
-            l = float(series["最低價"].replace(',','')) if not suspend else -1
-            c = float(series["收盤價"].replace(',','')) if not suspend else -1
+            o = float(str(series["開盤價"].replace(',',''))) if not suspend else -1
+            h = float(str(series["最高價"].replace(',',''))) if not suspend else -1
+            l = float(str(series["最低價"].replace(',',''))) if not suspend else -1
+            c = float(str(series["收盤價"].replace(',',''))) if not suspend else -1
             name =  series["證券名稱"]
             volume = int(round(int(series["成交股數"].replace(',',''))*0.001, 0)) if not suspend else 0
             turnover = round(int(series["成交金額"].replace(',',''))*0.00000001, 3)  if not suspend else 0
@@ -88,7 +92,7 @@ def parse_file_to_db(market_type:str, file_path:str):
                         "items.{0}.{1}".format(file_date,DB_KEY.TRANSACTION):transaction,                    
                     }
             }
-            result = mongo_mgr.upsert("stock", "DailyInfo", {DB_KEY.STOCK_ID:index}, query)
+            result = mongo_mgr.upsert("stock", "DailyInfo_{}".format(year_month), {DB_KEY.STOCK_ID:index}, query)
             if result['ok'] != 1.0:
                 raise Exception("mongo db upsert fail date:{0}, stock_id:{1}, query:{2}".format(file_date, index, query) )
             
@@ -157,6 +161,6 @@ def load_range(market_type:str, url_fmt:str, headers:str, start_date:str=None, e
 
 
 if __name__=="__main__":
-    load_range("twse", define.Define.TWSE_DAILY_PRICE_URL_FMT, define.Define.TWSE_DAILY_PRICE_HEADERS, True)
-    load_range("tpex", define.Define.TPEX_DAILY_PRICE_URL_FMT, define.Define.TPEX_DAILY_PRICE_HEADERS, True)
+    load_range("twse", define.Define.TWSE_DAILY_PRICE_URL_FMT, define.Define.TWSE_DAILY_PRICE_HEADERS, parse_to_db=True)
+    load_range("tpex", define.Define.TPEX_DAILY_PRICE_URL_FMT, define.Define.TPEX_DAILY_PRICE_HEADERS, parse_to_db=True)
     pass

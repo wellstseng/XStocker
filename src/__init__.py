@@ -1,0 +1,1 @@
+__all__ = ['define', 'global_func']
