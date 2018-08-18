@@ -11,7 +11,7 @@ import pandas as pd
 import csv
 
 try:
-    sys.path.append(os.path.abspath('./src'))
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     import global_func
     import define
     from mongo import MongoManager
@@ -54,7 +54,7 @@ def normalize_file(market_type:str, file_path:str):
         # now_time = datetime.now()
         # mongo_mgr.upsert("stock", "Logger", {DB_KEY.LOG_DATE:now_time.strftime("%Y%m%d")}, 
         #     {"$push":{DB_KEY.PARSE_LOG:"{0}: {1}".format(now_time.strftime("%Y%m%d-%H:%M:%S"), "normalize file:{0} finish".format(file_path))}})
-    if len(text_arr) <= 0:
+    if len(text_arr) <= 1:
         os.remove(file_path)
 
 def load_df_files(market_type, start_date, end_date):
@@ -69,7 +69,8 @@ def load_df_files(market_type, start_date, end_date):
         normalize_file(market_type, file_path)  
         if not os.path.isfile(file_path):
             continue      
-        df = pd.read_csv(file_path, header=0, index_col=0 )   
+        df = pd.read_csv(file_path, header=0, dtype={"證券代號":str} )   
+        df.set_index('證券代號', inplace=True)
         file_date = os.path.basename(file_path).split('.')[0]
         dfs[file_date] = df
         cnt +=1

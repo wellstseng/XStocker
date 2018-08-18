@@ -9,9 +9,8 @@ import time
 from datetime import timedelta, date, datetime
 import pandas as pd
 import csv
-
 try:
-    sys.path.append(os.path.abspath('./src'))
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     import global_func
     import define
     from mongo import MongoManager
@@ -62,7 +61,8 @@ def parse_file_to_db(market_type:str, file_path:str):
         print("File:{} not exist do not parse to db".format(file_path))
         return
     normalize_file(market_type, file_path)        
-    df = pd.read_csv(file_path, header=0, index_col=0 )   
+    df = pd.read_csv(file_path, header=0, dtype={"證券代號":str})
+    df.set_index('證券代號', inplace=True)
     file_date = os.path.basename(file_path).split('.')[0]    
     year_month = file_date[:6]
     total = len(df.index)

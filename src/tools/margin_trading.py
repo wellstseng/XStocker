@@ -1,8 +1,7 @@
 #%%
 # -*- encoding: utf-8 -*-
 import sys, os
-if __name__ == "__main__":
-    sys.path.append(os.path.abspath('./src'))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import requests
 import csv
@@ -12,7 +11,10 @@ import time
 import datetime
 from datetime import timedelta, date, datetime
 import global_func
-
+from define import DB_KEY as DB_KEY
+from tools.mongo import MongoManager
+mongo_mgr = MongoManager("mongodb://stock:stock@192.168.1.14:27017/stock")
+LOG_ENABLE = True
 class MarginTrading:
     def get_data(self, data_type:int, stock_id:str, date:str):
         '''
@@ -28,8 +30,11 @@ class MarginTrading:
         #檢查是否需從網路下載資料表
         file_path = self.check_load_margin_data(market, date) if data_type == define.MarginTradingType.MARGIN else self.check_load_daytrading_data(market, date) 
         #產生data frame回傳
-        df =pd.read_csv(file_path, encoding='utf-8', header=0, index_col=0)        
-        return market, df        
+        index_label = "代號" if market == define.MarketType.TPEX else "股票代號"
+        df =pd.read_csv(file_path, encoding='utf-8', header=0, dtype={index_label:str })
+        df.set_index(index_label, inplace=True)  
+        return market, df      
+
     def get_daytrade(self, stock_id:str, date:str):
         market, margin_df = self.get_data(define.MarginTradingType.MARGIN, stock_id, date)
         _, daytrading_df = self.get_data(define.MarginTradingType.DAYTRADING, stock_id, date)
@@ -40,6 +45,7 @@ class MarginTrading:
         short_selling = int(margin_df.at[stock_id, '資券互抵' if market == define.MarketType.TWSE else '資券相抵(張)'])
         day_trading = int(int(daytrading_df.at[stock_id, '當日沖銷交易成交股數'].replace(',',''))/1000) #換算張
         return short_selling+day_trading, short_selling, day_trading
+
     def get_rgzratio(self, stock_id:str, date:str):
         try:
             #print(margin_data.at[stock_id, '資券相抵(張)'])
@@ -55,7 +61,72 @@ class MarginTrading:
             return round(securities/financing*100, 2), securities, financing
         except:
             return (None, None, None)
-    def check_load_margin_data(self, market:str, date:str):        
+    
+    def parse_file_to_db(self, market_type:str, file_path:str):
+        if not os.path.isfile(file_path):
+            print("File:{} not exist do not parse to db".format(file_path))
+            return     
+        df = pd.read_csv(file_path, header=0, dtype={"股票代號":str})
+        df.set_index('股票代號', inplace=True)
+        file_date = os.path.basename(file_path).split('.')[0]    
+        year_month = file_date[:6]
+        total = len(df.index)
+        cnt = 0
+        for index, series in df.iterrows():
+            try:    
+                print("\r", end="")
+                series = df.loc[index]
+                name =  series["股票名稱"]
+                pb = float(str(series["資買進"]).replace(',',''))
+                ps = float(str(series["資賣出"]).replace(',',''))
+                pc = float(str(series["資現償"]).replace(',',''))
+                pbr = float(str(series["資前餘額"]).replace(',','')) 
+                ptr = float(str(series["資今餘"]).replace(',','')) 
+                pl = float(str(series["資限額"]).replace(',','')) 
+
+                sb = float(str(series["券買進"]).replace(',',''))
+                ss = float(str(series["券賣出"]).replace(',','')) 
+                sc = float(str(series["券現償"]).replace(',','')) 
+                sbr = float(str(series["券前餘"]).replace(',','')) 
+                str_ = float(str(series["券今餘"]).replace(',','')) 
+                sl = float(str(series["券限額"]).replace(',','')) 
+
+                m = float(str(series["資券互抵"]).replace(',','')) 
+
+                
+                query = {"$set":{DB_KEY.NAME:name}}
+                query["$set"]["items.{0}.{1}".format(file_date, DB_KEY.PURCHASE_BUY)]=pb
+                query["$set"]["items.{0}.{1}".format(file_date, DB_KEY.PURCHASE_SELL)]=ps
+                query["$set"]["items.{0}.{1}".format(file_date, DB_KEY.PURCHASE_REPAYMENT)]=pc
+                query["$set"]["items.{0}.{1}".format(file_date, DB_KEY.PURCHASE_BEFORE_REMAIN)]=pbr
+                query["$set"]["items.{0}.{1}".format(file_date, DB_KEY.PURCHASE_TODAY_REMAIN)]=ptr
+                query["$set"]["items.{0}.{1}".format(file_date, DB_KEY.PURCHASE_LIMIT)]=pl
+
+                query["$set"]["items.{0}.{1}".format(file_date, DB_KEY.SELL_BUY)]=sb
+                query["$set"]["items.{0}.{1}".format(file_date, DB_KEY.SELL_SELL)]=ss
+                query["$set"]["items.{0}.{1}".format(file_date, DB_KEY.SELL_REPAYMENT)]=sc
+                query["$set"]["items.{0}.{1}".format(file_date, DB_KEY.SELL_BEFORE_REMAIN)]=sbr
+                query["$set"]["items.{0}.{1}".format(file_date, DB_KEY.SELL_TODAY_REMAIN)]=str_
+                query["$set"]["items.{0}.{1}".format(file_date, DB_KEY.SELL_LIMIT)]=sl
+
+                query["$set"]["items.{0}.{1}".format(file_date, DB_KEY.MARGIN_OFFSET)]=m
+                
+                result = mongo_mgr.upsert("stock", "DailyInfo_{}".format(year_month), {DB_KEY.STOCK_ID:index}, query)
+                if result['ok'] != 1.0:
+                    raise Exception("mongo db upsert fail date:{0}, stock_id:{1}, query:{2}".format(file_date, index, query) )
+                cnt += 1
+                if LOG_ENABLE:
+                    sys.stdout.flush()     
+                    print("{0:10} {1:8} => {2:6}/{3:6}    ".format(file_date, index, cnt, total ),end='')
+                
+            except Exception as e:
+                print("fail date:{} \n msg:{} \n data:{}".format(file_date, e, series))
+                break
+        print("", end="\n")
+        print("done")
+
+
+    def check_load_margin_data(self, market:str, date:str, parse_to_db=False):        
         '''
         檢查下載信用交易資料
         '''
@@ -95,12 +166,18 @@ class MarginTrading:
                                 for i in text.split('\n') 
                                 if len(i.split('",')) == 20 or len(i.split('",')) == 21 or ("代號" in i and "名稱" in i)]
                 if len(text_arr) > 1:
+                    if "代號" in text_arr[0]:
+                        text_arr[0] = "\"股票代號\",\"股票名稱\",\"資前餘額\",\"資買進\",\"資賣出\",\"資現償\",\"資今餘\",\"資屬證金\",\"資使用率(%)\",\"資限額\",\"券前餘\",\"券賣出\",\"券買進\",\"券現償\",\"券今餘\",\"券屬證金\",\"券使用率(%)\",\"券限額\",\"資券互抵\",\"註記\""
                     #寫入CSV檔案
                     initialize_text = "\n".join(text_arr)
                     self.__save_text(file_path, initialize_text)
                     print('load tpex margin done')
                 else:
                     print('no tpex margin data')
+            
+            if parse_to_db:
+                print("Parse file {0} to db".format(file_path))
+                self.parse_file_to_db(market, file_path)   
 #endregion
         return file_path
     def check_load_daytrading_data(self, market:str, date:str):
@@ -181,7 +258,7 @@ class MarginTrading:
             f.write(text)
             f.close()
 
-def update_range( data_type, market_type, start_date=None, end_date=None):    
+def update_range( data_type, market_type, start_date=None, end_date=None, parse_to_db=True):    
     if start_date == None:
         start_date = datetime.now().strftime("%Y/%m/%d")
 
@@ -202,7 +279,7 @@ def update_range( data_type, market_type, start_date=None, end_date=None):
             if data_type == define.DataType.DAY_TRADIN:
                 t.check_load_daytrading_data(market_type, src_date)
             elif data_type == define.DataType.MARGIN:
-                t.check_load_margin_data(market_type, src_date)
+                t.check_load_margin_data(market_type, src_date, parse_to_db)
             else:
                 raise Exception("Invalid Margin Type:{0}".format(data_type))
             print("sleep 10")
