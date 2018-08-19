@@ -177,6 +177,4 @@ def import_to_mongo(market_type, start_date:str=None, end_date:str=None):
     build_query()
     execute_query()
     print("All Done")
-    
-if __name__ == "__main__" :
-    import_to_mongo("tpex", "2018/08/17", "2018/08/16")
+

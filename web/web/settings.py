@@ -76,8 +76,14 @@ WSGI_APPLICATION = 'web.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'djongo',
+        'NAME': "web",
+        'USER':"web",
+        'PASSWORD':"web",
+        'HOST':"192.168.1.14",
+        'PORT':27017,
+        'AUTH_SOURCE': 'web',
+        'AUTH_MECHANISM': 'SCRAM-SHA-1'
     }
 }
 
