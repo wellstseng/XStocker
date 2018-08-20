@@ -1,0 +1,8 @@
+<h1>Record</h1>
+<ul>
+{% for object in object_list %}   
+    {% for record in object.stock_list %}  
+        <li> {{ record.stock_id }} </li>
+    {% endfor %}
+{% endfor %}
+</ul>

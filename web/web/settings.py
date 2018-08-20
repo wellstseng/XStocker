@@ -30,14 +30,14 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-INSTALLED_APPS = [
-    #'login.apps.LoginConfig',
+INSTALLED_APPS = [    
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'stock.apps.StockConfig',
 ]
 
 MIDDLEWARE = [
@@ -52,10 +52,25 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'web.urls'
 
-TEMPLATES = [
+TEMPLATES = [   
     {
         'BACKEND': 'django.template.backends.jinja2.Jinja2',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates'),],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+            'autoescape': True,
+        },
+    },
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -126,3 +141,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+LOGIN_REDIRECT_URL = "/stock/overview"
