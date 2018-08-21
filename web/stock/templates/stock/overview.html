@@ -1,8 +1,59 @@
-<h1>Record</h1>
-<ul>
-{% for object in object_list %}   
-    {% for record in object.stock_list %}  
-        <li> {{ record.stock_id }} </li>
-    {% endfor %}
-{% endfor %}
-</ul>
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>           
+            table {
+                width: 100%;
+            }
+            #customers {
+                font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+                border-collapse: collapse;
+                width: 100%;
+            }
+            
+            #customers td, #customers th {
+                border: 1px solid #ddd;
+                padding: 8px;
+            }
+            
+            #customers tr:nth-child(even){background-color: #f2f2f2;}
+            
+            #customers tr:hover {background-color: #ddd;}
+            
+            #customers th {
+                padding-top: 12px;
+                padding-bottom: 12px;
+                text-align: left;
+                background-color: #4CAF50;
+                color: white;
+            }
+            </style>
+        </style>
+        <title> Overview </title>
+    </head>
+    <body>
+        <h1>Record</h1>
+        <table id="customers">
+            <tr> 
+                <th> 股票代號 </th>
+                <th> 股票名稱 </th>
+                <th> 最新收盤價 </th>
+                <th> 昂貴價 </th>
+                <th> 合理價 </th>
+                <th> 便宜價 </th>
+            </tr>
+            {% if dataset is not None %}
+                {% for stock_id, data in dataset.items %}
+                    <tr>
+                        <td> {{ stock_id }} </td>
+                        <td> name </td>
+                        <td> 0.00 </td>
+                        <td> {{ data.expensive }} </td>
+                        <td> {{ data.resonable }} </td>
+                        <td> {{ data.cheap }} </td>            
+                    </tr>
+                {% endfor %}
+            {% endif %}
+        </table>
+    </body>
+</html>

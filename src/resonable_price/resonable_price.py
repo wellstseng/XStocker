@@ -121,13 +121,17 @@ def get_dataframe(stock_id:str):
         j+=1
     return df
 
-def execute(stock_id, quarter):    
+def execute(stock_id, quarter=None):    
     df = get_dataframe(stock_id)
     if df is None:
         print("dataframe is None")
+        return None
     else:
         quarter = df.index[0] if not quarter else quarter
-        print(df.loc[[quarter], ['四季昂貴均價', '四季合理均價','四季便宜均價']])
+        result = df.loc[[quarter], ['四季昂貴均價', '四季合理均價','四季便宜均價']]
+        print(result)
+        return result
+    
 
 if __name__ == '__main__':
     stock_id = ""
