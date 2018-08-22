@@ -128,6 +128,8 @@ def execute(stock_id, quarter=None):
         return None
     else:
         quarter = df.index[0] if not quarter else quarter
+        if "Q" not in quarter:
+            quarter = "{}Q{}".format(quarter[:4], quarter[-1])
         result = df.loc[[quarter], ['四季昂貴均價', '四季合理均價','四季便宜均價']]
         print(result)
         return result
