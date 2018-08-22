@@ -172,3 +172,5 @@ class DB_KEY:
     EXPENSIVE = "expen"
     RESONABLE = "reson"
     CHEAP = "cheap"
+    LATEST_QUARTER = "lqua"
+    

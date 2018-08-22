@@ -2,7 +2,8 @@ from resonable_price import resonable_price
 import time
 def get_stock_info(stock_id:str):
     tbl = {}
-    #TODO 合理價存入mongo db 
+    
+    
     df = resonable_price.execute(stock_id)
     if df is not None:
         tbl["expensive"] =  df.iloc[0, [0]].values[0]
