@@ -131,7 +131,7 @@ def execute(stock_id, quarter=None):
         result = df.loc[[quarter], ['四季昂貴均價', '四季合理均價','四季便宜均價']]
         print(result)
         return result
-    
+  
 
 if __name__ == '__main__':
     stock_id = ""

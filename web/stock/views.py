@@ -9,7 +9,7 @@ logger = logging.getLogger('django')
 import sys,os
 from web.settings import BASE_DIR
 sys.path.append(os.path.join(os.path.dirname(BASE_DIR),"src"))
-from resonable_price import resonable_price
+import xstocker
 
 
 class RecordOverview(generic.ListView):
@@ -25,17 +25,10 @@ class RecordOverview(generic.ListView):
         if userdata != None:        
             sett = {}   
             for record in userdata.stock_list: 
-                tbl = {}
-                logger.info(str(record))
-                stock_id = str(record)               
-                tbl["tock_id"] = stock_id
-                #TODO 合理價存入mongo db 
-                df = None#resonable_price.execute(stock_id)
-                if df is not None:
-                    tbl["expensive"] =  df.iloc[0, [0]].values[0]
-                    tbl["resonable"] =  df.iloc[0, [1]].values[0]
-                    tbl["cheap"] =  df.iloc[0, [2]].values[0]             
-                sett[str(stock_id)] = tbl
+                stock_id = str(record)
+                tbl = xstocker.get_stock_info(stock_id)           
+                sett[stock_id] = tbl
+                
         return sett
        
 

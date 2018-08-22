@@ -168,3 +168,7 @@ class DB_KEY:
     SELL_TODAY_REMAIN="str"
     SELL_LIMIT="sl"
     MARGIN_OFFSET="mo"
+
+    EXPENSIVE = "expen"
+    RESONABLE = "reson"
+    CHEAP = "cheap"
