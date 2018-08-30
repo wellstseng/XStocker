@@ -1,13 +1,11 @@
-from resonable_price import resonable_price
+
 import time
+#from predict_price import web_loader
+
+from predict_price import db_manager
 def get_stock_info(stock_id:str):
-    tbl = {}
-    
-    
-    df = resonable_price.execute(stock_id)
-    if df is not None:
-        tbl["expensive"] =  df.iloc[0, [0]].values[0]
-        tbl["resonable"] =  df.iloc[0, [1]].values[0]
-        tbl["cheap"] =  df.iloc[0, [2]].values[0]  
-        time.sleep(1)
+    #tbl = web_loader.load(stock_id)
+    tbl = db_manager.fetch_predict_price(stock_id)[1]
     return tbl
+
+

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <style>           
             table {
                 width: 100%;
@@ -45,15 +46,55 @@
             {% if dataset is not None %}
                 {% for stock_id, data in dataset.items %}
                     <tr>
+                        <input class="c_init" type="hidden" name="s_{{ stock_id }}" value="False">
+                        {{ csrf_input }}
                         <td> {{ stock_id }} </td>
                         <td> name </td>
                         <td> 0.00 </td>
-                        <td> {{ data.expensive }} </td>
-                        <td> {{ data.resonable }} </td>
-                        <td> {{ data.cheap }} </td>            
+                        <td id = "price_exp_{{ stock_id }}"> -- </td>
+                        <td id = "price_res_{{ stock_id }}"> -- </td>
+                        <td id = "price_chp_{{ stock_id }}"> --  </td>            
                     </tr>
                 {% endfor %}
             {% endif %}
         </table>
+        <script>
+            function check_update_predict_price() {
+                var is_loading = "False";
+                $(".c_init, [value=False]").each(function(index, element) {                   
+                    console.log("s name = "+element.name);
+                    if (element.value.trim() ==  "False" && 
+                        is_loading == "False") {
+                        is_loading = "True";
+                        console.log("start load: " + element.name);
+                        $.ajax(
+                            {
+                                url:"/stock/query/",
+                                type:'POST',
+                                dataType:'json',
+                                data:{stock_name: element.name},
+                                success: function (response) {
+                                    $("#id"+response.stock_id).text(response.value)
+                                    console.log("stock_id: " + response.stock_id + " value: " + response.value);         
+                                    $('#price_exp_'+ response.stock_id).text(response.value["expen"]);   
+                                    $('#price_res_'+ response.stock_id).text(response.value["reson"]);  
+                                    $('#price_chp_'+ response.stock_id).text(response.value["cheap"]);  
+                                    $("input[name=s_"+ response.stock_id+"]").attr("value","True"); 
+                                    is_loading="False"         
+                                }
+                    
+                            }
+                        );
+                    }
+                });
+            };
+            var interval_handler;
+
+            $(
+                function() {
+                    interval_handler = setInterval(check_update_predict_price, 5000);                    
+                }
+            );
+        </script>
     </body>
 </html>

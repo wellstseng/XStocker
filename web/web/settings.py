@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'stock.apps.StockConfig',
+    'django_celery_results',
 ]
 
 MIDDLEWARE = [
@@ -141,3 +142,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 LOGIN_REDIRECT_URL = "/stock/overview"
+
+#BROKER_URL = 'amqp://root:root@192.168.1.14:5672/'
+CELERY_RESULT_BACKEND = 'django-db'

@@ -30,5 +30,32 @@ class RecordOverview(generic.ListView):
                 sett[stock_id] = tbl
                 
         return sett
-       
+    
+from django.http import JsonResponse
+def test(request):
+    return render(request, "stock/test.html")
 
+from django.views.decorators.csrf import csrf_exempt
+import time
+
+cache = {}
+def _delay(d):
+    time.sleep(2+d*1.5)
+    logger.info("delay 5 finish")
+    return HttpResponse("hello  1234567")
+
+
+@csrf_exempt
+def query(request):    
+    logger.info("request:" + str(request.POST))
+    dic = request.POST.dict()
+    stock_id = dic["stock_name"].replace("s_","")
+    tbl = xstocker.get_stock_info(stock_id)  
+    new_dic = {"stock_id": stock_id, "value":tbl}
+    return JsonResponse(new_dic)
+
+from .tasks import *
+def test_celery(request):
+    logger.info("test celery")
+    xstocker.get_stock_info("2377")
+    return HttpResponse("hello")

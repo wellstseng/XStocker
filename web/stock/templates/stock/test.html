@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head> 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+
+<body>
+
+<table> 
+    <tr>
+        <th> ia1 </th>
+        <th> ia2 </th>
+        <th> ia3 </th>
+    </tr>
+    <tr>
+        <td> v1 </td>
+        <td> v2 </td>
+        <td> v3 </td>
+    </tr>
+    <tr>
+        <td id = "id1"> -- </td>
+        <td id = "id2"> -- </td>
+        <td id = "id3"> -- </td>
+    </tr>
+
+</table>
+<span class="Timer"> </span>
+
+</body>
+
+<script>    
+    $(
+        function() {
+            for (i = 1; i <= 3; i++) {
+                var v = $("#id"+i).text().trim();
+                console.log("id" + i + " value = " + v);
+                if (v == "--" || v == "") {                    
+                    console.log("id"+ i + " has no value");
+                    $.ajax(
+                        {
+                            url:"/stock/query/",
+                            type:'POST',
+                            dataType:'json',
+                            data:{idx:i},
+                            success: function (response) {
+                                $("#id"+response.idx).text(response.value)
+                                console.log("idx: " + response.idx + " value: " + response.value);                                
+                            }
+                
+                        }
+                    );
+                    break;
+                } 
+            }
+        }
+    );
+
+    var start = new Date;
+
+    $(setInterval(function() {
+        $('.Timer').text(Math.round((new Date - start) / 1000,0) + " Seconds");
+    }, 1000));
+    /*
+    $(document).ready(function() {
+        $.ajaxSetup({
+            success: function() {
+               alert("success")
+            }
+        });
+    });
+    
+    $(document).ready(function() {
+        $("#btn1").click( function() {
+            var host = '1.1.1.1';
+            var port = '1111';
+            $.ajax({
+            url:"/stock/query/",
+            type:'POST',
+            data:{host:host,port:port},
+           
+
+            });
+        });
+    }); */
+/*
+    $(document).ready(function() {
+        $("#btn1").click( function() {
+            var host = '1.1.1.1';
+            var port = '1111';
+            $.ajax({
+            url:"/stock/query/",
+            type:'POST',
+            data:{host:host,port:port},
+            success: function (response) {
+                $("#block1").html(response);
+            }
+
+            });
+        });
+   }); */
+</script>
+</html>
