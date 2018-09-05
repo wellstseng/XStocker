@@ -54,7 +54,7 @@ def fetch_predict_price(stock_id:str, quarter:str=None):
     if quarter is not None:
         quarter = quarter.replace("Q", "")
     price_tbl = None
-    result = mongo_mgr.find_one("stock", "predict_price", {'stkid':stock_id, })
+    result = mongo_mgr.find_one("stock", "predict_price", {'stkid':stock_id})
     if result is None :
         logger.info("{0} is None fetch from www and insert to mongo")
         quarter, price_tbl = __upsert_data(stock_id, quarter)
@@ -67,6 +67,17 @@ def fetch_predict_price(stock_id:str, quarter:str=None):
             price_tbl = result["datas"][quarter]
             
     return quarter, price_tbl   
+
+def check_db_has_predict_price(stock_id:str, quarter:str = None):
+    result = mongo_mgr.find_one("stock", "predict_price", {'stkid':stock_id, })
+    if result is None:
+        return False
+    else:
+        if quarter is None:
+            quarter = result[DB_KEY.LATEST_QUARTER]
+        if quarter not in result["datas"]:
+            return False
+    return True
 
 if __name__ == "__main__":
     print(fetch_predict_price("3546"))

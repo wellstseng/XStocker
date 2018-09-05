@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.views import generic
 from django.http import  HttpResponse
 from .models import Overview
+from django_celery_results.models import TaskResult
 import logging
 logger = logging.getLogger('django')
 
@@ -11,6 +12,7 @@ from web.settings import BASE_DIR
 sys.path.append(os.path.join(os.path.dirname(BASE_DIR),"src"))
 import xstocker
 
+import asyncio
 
 class RecordOverview(generic.ListView):
     template_name="stock/overview.html"
@@ -26,8 +28,18 @@ class RecordOverview(generic.ListView):
             sett = {}   
             for record in userdata.stock_list: 
                 stock_id = str(record)
-                tbl = xstocker.get_stock_info(stock_id)           
-                sett[stock_id] = tbl
+                json_tbl = {"status":"INIT",  "data":None, "task":None}
+                if xstocker.check_db_has_predict_price(stock_id):
+                    logger.info("has data in db:"+ stock_id)
+                    predict_price_tbl = xstocker.get_stock_info(stock_id)
+                    json_tbl["status"] = "SUCCESS"
+                    json_tbl["data"] = predict_price_tbl
+                else:
+                    logger.info("load {} async".format(stock_id))
+                    task = load_predict_price.delay(stock_id)
+                    json_tbl["status"] = task.status
+                    json_tbl["task_id"] = task.task_id
+                sett[stock_id] = json_tbl
                 
         return sett
     
@@ -38,24 +50,29 @@ def test(request):
 from django.views.decorators.csrf import csrf_exempt
 import time
 
-cache = {}
-def _delay(d):
-    time.sleep(2+d*1.5)
-    logger.info("delay 5 finish")
-    return HttpResponse("hello  1234567")
-
-
 @csrf_exempt
 def query(request):    
     logger.info("request:" + str(request.POST))
     dic = request.POST.dict()
     stock_id = dic["stock_name"].replace("s_","")
-    tbl = xstocker.get_stock_info(stock_id)  
-    new_dic = {"stock_id": stock_id, "value":tbl}
+    task = dic["task_id"]
+    logger.info("check task {} status".format(task))
+    filt = TaskResult.objects.filter(task_id=task)
+    logger.info("result: {}".format(filt))
+    if len(filt) > 0:
+        result = filt[0]    
+        if result.status == "PENDING":
+            new_dic = {"status":result.status}
+        else:
+            tbl = xstocker.get_stock_info(stock_id)  
+            new_dic = {"status":result.status, "stock_id": stock_id, "value":tbl}
+    else:
+        new_dic = {"status":"PENDING"}
     return JsonResponse(new_dic)
 
-from .tasks import *
+
+from .tasks import load_predict_price
 def test_celery(request):
-    logger.info("test celery")
-    xstocker.get_stock_info("2377")
-    return HttpResponse("hello")
+    logger.info("test celery1")    
+    result = load_predict_price.delay("2458")
+    return HttpResponse(result.task_id)
