@@ -28,10 +28,12 @@ class RecordOverview(generic.ListView):
             sett = {}   
             for record in userdata.stock_list: 
                 stock_id = str(record)
-                json_tbl = {"status":"INIT",  "data":None, "task":None}
+                json_tbl = {"status":"INIT",  "data":None, "task":None, "info":None}
+                json_tbl["info"] = xstocker.get_basic_info(stock_id)
+                logger.info(str(json_tbl["info"]))
                 if xstocker.check_db_has_predict_price(stock_id):
                     logger.info("has data in db:"+ stock_id)
-                    predict_price_tbl = xstocker.get_stock_info(stock_id)
+                    predict_price_tbl = xstocker.get_predict_price(stock_id)
                     json_tbl["status"] = "SUCCESS"
                     json_tbl["data"] = predict_price_tbl
                 else:
@@ -50,7 +52,6 @@ def test(request):
 from django.views.decorators.csrf import csrf_exempt
 import time
 
-@csrf_exempt
 def query(request):    
     logger.info("request:" + str(request.POST))
     dic = request.POST.dict()
@@ -69,6 +70,33 @@ def query(request):
     else:
         new_dic = {"status":"PENDING"}
     return JsonResponse(new_dic)
+
+def init(request):    
+    logger.info("init:" + str(request.POST) + " user " + str(request.user))
+    dic = request.POST.dict()
+    stock_id = dic["stock_name"].replace("s_","")
+
+    json_tbl = {"status":"INIT",  "stock_id":stock_id, "task":None, "value":None}
+    if xstocker.check_db_has_predict_price(stock_id):
+        logger.info("has data in db:"+ stock_id)
+        predict_price_tbl = xstocker.get_stock_info(stock_id)
+        json_tbl["status"] = "SUCCESS"
+        json_tbl["value"] = predict_price_tbl
+    else:
+        logger.info("load {} async".format(stock_id))
+        task = load_predict_price.delay(stock_id)
+        json_tbl["status"] = task.status
+        json_tbl["task"] = task.task_id
+
+    current_user = request.user
+    results = Overview.objects.filter(user_id=current_user.id)
+    userdata = results[0] if len(results) > 0 else None
+    if userdata != None and not userdata.has_stock(stock_id):
+        logger.info("add stock " + stock_id)
+        userdata.add(stock_id)
+        
+
+    return JsonResponse(json_tbl)
 
 
 from .tasks import load_predict_price

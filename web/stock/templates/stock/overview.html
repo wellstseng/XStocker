@@ -50,8 +50,10 @@
     </head>
     <body>
         <h1>Record</h1>
+        <input type="text" id="new_stock_input"  />
         <button onclick="onAddClick()"> Add </button>
         <div class="divTable paleBlueRows" id="root">
+            {{ csrf_input }}
             <div class="divTableHeading">
                 <div class="divTableRow">
                     <div class="divTableHead">股票代號</div>
@@ -62,49 +64,88 @@
                     <div class="divTableHead">便宜價</div>
                 </div>
             </div>
+            <div class="divTableBody" id="tbody" >  
             {% if dataset is not None %}
-                {% for stock_id, data in dataset.items %}
-
-                    <div class="divTableBody">
-                        {{ csrf_input }}
-                        <input class="c_init" type="hidden" name="s_{{ stock_id }}" value="{{data.status}}" task="{{data.task_id}}" />
-                        <div class="divTableRow">
-                            <div class="divTableCell">{{ stock_id }}</div>
-                            <div class="divTableCell">name</div>
-                            <div class="divTableCell">0.00</div>
-                            <!-- begin predict price group -->
-                            <div class="divTableCell" id = "price_exp_{{ stock_id }}"> {{data.data.expen}} </div>
-                            <div class="divTableCell" id = "price_res_{{ stock_id }}"> {{data.data.expen}} </div>
-                            <div class="divTableCell" id = "price_chp_{{ stock_id }}"> {{data.data.cheap}} </div>   
-                            
-                            <!--end predict price group -->                       
-                        </div>                      
-                    </div>         
+                {% for stock_id, data in dataset.items %}                                          
+                    <div class="divTableRow c_init" name="s_{{ stock_id }}" value="{{data.status}}" task="{{data.task_id}}">
+                        <div class="divTableCell">{{ stock_id }}</div>
+                        <div class="divTableCell">name</div>
+                        <div class="divTableCell">0.00</div>
+                        <!-- begin predict price group -->
+                        <div class="divTableCell" id = "price_exp_{{ stock_id }}"> {{data.data.expen}} </div>
+                        <div class="divTableCell" id = "price_res_{{ stock_id }}"> {{data.data.expen}} </div>
+                        <div class="divTableCell" id = "price_chp_{{ stock_id }}"> {{data.data.cheap}} </div>                           
+                        <!--end predict price group -->                       
+                    </div>    
                 {% endfor %}
-            {% endif %}      
+            {% endif %} 
+            </div>     
         </div>
 
        
-        <script>
+        <script>     
+
+            /**
+            * setup JQuery's AJAX methods to setup CSRF token in the request before sending it off.
+            * http://stackoverflow.com/questions/5100539/django-csrf-check-failing-with-an-ajax-post-request
+            */
+
+            function getCookie(name)
+            {
+                var cookieValue = null;
+                if (document.cookie && document.cookie != '') {
+                    var cookies = document.cookie.split(';');
+                    for (var i = 0; i < cookies.length; i++) {
+                        var cookie = jQuery.trim(cookies[i]);
+                        // Does this cookie string begin with the name we want?
+
+                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            $.ajaxSetup({ 
+                beforeSend: function(xhr, settings) {
+                    if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+                        // Only send the token to relative URLs i.e. locally.
+                        xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+                    }
+                } 
+            });              
             function onAddClick() {
-                var $newdiv1 = $( "<div class=\"divTableBody\">{{ csrf_input }}<input class=\"c_init\" type=\"hidden\" name=\"s_{{ stock_id }}\" value=\"{{data.status}}\" task=\"{{data.task_id}}\" /></div>" )
-                $("#root").append($newdiv1);
+                var new_stock = $("#new_stock_input").val();
+                console.log("new stock: " + new_stock);
+                var $newdiv1 = $( '<div class="divTableRow c_init" name="s_'+ new_stock + '" value="INIT" task=""></div>' );
+                $($newdiv1).append('<div class="divTableCell">'+new_stock+'</div>');
+                $($newdiv1).append('<div class="divTableCell">name</div>');
+                $($newdiv1).append('<div class="divTableCell">0.00</div>');
+                $($newdiv1).append('<div class="divTableCell" id = "price_exp_'+ new_stock +'"> </div>');
+                $($newdiv1).append('<div class="divTableCell" id = "price_res_'+ new_stock +'"> </div>');
+                $($newdiv1).append('<div class="divTableCell" id = "price_chp_'+ new_stock +'"> </div>');
+                
+                $("#tbody").append($newdiv1);
+                
             }
 
             function check_update_predict_price() {
-                $("input.c_init:not([value='SUCCESS'])").each(function(index, element) {  
+                $(".divTableRow.c_init:not([value='SUCCESS'])").each(function(index, element) {  
                     var task = $(element).attr('task');                 
-                    //console.log("s name = "+element.name + " task id: " + task);                    
-                    if (element.value.trim() == "PENDING" ) {
+                    console.log("s name = "+ $(element).attr('name') + " task id: " + task);  
+                    var value_status = $(element).attr('value').trim();               
+                    if (value_status == "PENDING" ) {
                         $.ajax(
                             {
                                 url:"/stock/query/",
                                 type:'POST',
                                 dataType:'json',
-                                data:{stock_name: element.name, task_id:task},
+                                data:{stock_name: $(element).attr('name'), task_id:task},
                                 success: function (response) {
                                     //console.log("status: " + response.status + " stock_id: " + response.stock_id + " value: " + response.value);  
-                                    $('input[name=s_' + response.stock_id + ']').attr("value",  response.status);
+                                    $('div[name=s_' + response.stock_id + ']').attr("value",  response.status);
                                     if (response.status == "SUCCESS") {
                                         $('#price_exp_'+ response.stock_id).text(response.value["expen"]);   
                                         $('#price_res_'+ response.stock_id).text(response.value["reson"]);  
@@ -115,11 +156,34 @@
                             }
                         );
                     }
+                    else if(value_status == "INIT") {
+                        $.ajax(
+                            {
+                                url:"/stock/init/",
+                                type:'POST',
+                                dataType:'json',
+                                data:{stock_name: $(element).attr('name')},
+                                success: function (response) {
+                                    console.log("init status: " + response.status + " stock_id: " + response.stock_id + " task: " + response.task); 
+                                    
+                                    $('div[name=s_' + response.stock_id + ']').attr("value",  response.status);
+                                    $('div[name=s_' + response.stock_id + ']').attr("task",  response.task);
+                                    if (response.status == "SUCCESS") {
+                                        $('#price_exp_'+ response.stock_id).text(response.value["expen"]);   
+                                        $('#price_res_'+ response.stock_id).text(response.value["reson"]);  
+                                        $('#price_chp_'+ response.stock_id).text(response.value["cheap"]);  
+                                    } 
+                                          
+                                }
+                    
+                            }
+                        );
+                    }
                 });
             };
             var interval_handler;
 
-            $(
+            $(                
                 function() {
                     interval_handler = setInterval(check_update_predict_price, 5000);                    
                 }

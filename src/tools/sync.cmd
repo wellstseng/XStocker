@@ -1,0 +1,1 @@
+python daily_price.py
