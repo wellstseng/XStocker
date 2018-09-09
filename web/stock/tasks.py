@@ -11,7 +11,7 @@ except:
     from web.settings import BASE_DIR
 sys.path.append(os.path.join(os.path.dirname(BASE_DIR),"src"))
 print(sys.path)
-from predict_price import db_manager
+from predict_price import manager
 
 cnt = 0
 
@@ -24,8 +24,19 @@ def add(x, y):
 def load_predict_price(stock_id):
     print("sleep 10")
     time.sleep(10)
-    db_manager.fetch_predict_price(stock_id)
+    #db_manager.fetch_predict_price(stock_id)
+    manager.execute(stock_id, None, True)
     print("sleep 10 finsidh !!!!@@@@@!@")
+    
+    return stock_id
+
+@shared_task
+def load_per_pbr_data(stock_id):
+    print("load per pbr data")
+
+    manager.load_per_pbr_data(stock_id, True, True)
+    
+    print("***** load finsidh !!!!@@@@@!@  " + stock_id)
     
     return stock_id
 

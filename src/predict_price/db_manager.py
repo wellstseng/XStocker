@@ -23,7 +23,7 @@ def __upsert_data(stock_id, quarter, latest_quarter=None):
     price_tbl = None
     if quarter is not None:
         quarter = quarter.replace("Q", "")
-    df = manager.execute(stock_id, quarter)
+    df = manager.execute(stock_id, quarter, True)
     if df is not None:
         quarter = df.index[0].replace("Q","")
         expensive =  df.iloc[0, [0]].values[0]

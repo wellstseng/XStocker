@@ -1,5 +1,7 @@
 from djongo import models
 from django.contrib.auth.models import User
+import logging 
+logger = logging.getLogger('django')
 
 class Record(models.Model):
     stock_id = models.CharField(max_length=20)
@@ -17,17 +19,30 @@ class Overview(models.Model):
         model_container=Record,
     )
 
-    def add(self, _stock_id:str):
+    def add_stock(self, _stock_id:str):
         record = Record(stock_id=_stock_id)
         self.stock_list.append(record)
         self.save()
 
-    def has_stock(self, stock_id:str):
-        find = False
-        for d in self.stock_list:
-            if d.stock_id == stock_id:
-                find = True
+    def remove_stock(self, stock_id:str):
+        idx = self.get_stock(stock_id)
+        if idx == -1:
+            return False
+        else:
+            del self.stock_list[idx]
+            self.save()
+            return True
+
+    def get_stock(self, stock_id:str):
+        find = -1
+        for i in range(0, len(self.stock_list)):
+            if self.stock_list[i].stock_id == stock_id:
+                find = i
                 break
+        return find
+
+    def has_stock(self, stock_id:str):
+        return self.get_stock(stock_id) != -1
 
     def __str__(self):
         return "user:{0}, list: {1}".format(self.user.username, ','.join(str(x) for x in self.stock_list))

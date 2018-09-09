@@ -173,4 +173,6 @@ class DB_KEY:
     RESONABLE = "reson"
     CHEAP = "cheap"
     LATEST_QUARTER = "lqua"
+    LATEST_DAY = "latsd"
+    OBJECT_ID="_id"
     

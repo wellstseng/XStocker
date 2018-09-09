@@ -8,8 +8,17 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
 import sys,os
+import time
 TEST_MODE = False
 
+class PredicePriceDefine:
+    LOCK = False
+    CD_TIME = 10
+    PER_PBR_FILE_PATH_FMT = "C:/Github/XStocker/src/predict_price/res/PER_PBR_{}.html"
+
+def has_per_pbr_file(stock_id):
+    file_path = PredicePriceDefine.PER_PBR_FILE_PATH_FMT.format(stock_id)
+    return os.path.isfile(file_path)
 
 def pe_ratio_calculator(str_price:str, str_predict_eps:str):
     predict_eps = float(str_predict_eps) if '-' not in str_predict_eps else None
@@ -41,12 +50,8 @@ def average_price(rows, base_amount):
         t = None
     return str(round(t/4, 2)) if t is not None else '-'
 
-def get_dataframe(stock_id:str):
-    result = ""
-    if not TEST_MODE:
-        if not stock_id:
-            return None
-        headers = {'accept': '*/*',
+def load_per_pbr_data(stock_id:str, cache:bool=False, need_sleep=False):
+    headers = {'accept': '*/*',
         'accept-encoding': 'gzip, deflate, br',
         'accept-language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7',
         'content-length': '0',
@@ -54,17 +59,29 @@ def get_dataframe(stock_id:str):
         'origin': 'https://goodinfo.tw',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36'}
 
-        headers['referer'] = 'https://goodinfo.tw/StockInfo/StockBzPerformance.asp?STOCK_ID={0}&YEAR_PERIOD=9999'.format(stock_id)
-        r = requests.post('https://goodinfo.tw/StockInfo/StockBzPerformance.asp', data = {'STOCK_ID': stock_id,'YEAR_PERIOD': '9999','RPT_CAT': 'M_QUAR','STEP': 'DATA','SHEET': 'PER/PBR',}, headers = headers)
-        r.encoding = 'utf8'
-        result = r.text
+    headers['referer'] = 'https://goodinfo.tw/StockInfo/StockBzPerformance.asp?STOCK_ID={0}&YEAR_PERIOD=9999'.format(stock_id)
+    r = requests.post('https://goodinfo.tw/StockInfo/StockBzPerformance.asp', data = {'STOCK_ID': stock_id,'YEAR_PERIOD': '9999','RPT_CAT': 'M_QUAR','STEP': 'DATA','SHEET': 'PER/PBR',}, headers = headers)
+    r.encoding = 'utf8'
+    result = r.text
+    
+    if cache == True:
+        file_path = PredicePriceDefine.PER_PBR_FILE_PATH_FMT.format(stock_id)
+        with open(file_path, 'a+', encoding='utf8') as f:
+            f.write(result)
+            f.close()
+    return result
+
+def get_dataframe(stock_id:str, cache:bool=False):
+    if not stock_id:
+        return None
+
+    result = ""   
+    if not has_per_pbr_file(stock_id):       
+        result = load_per_pbr_data(stock_id, cache)
     else:
-        print('Test Mode')
-        dir_name = os.path.dirname(__file__)
-        example_path = os.path.join(dir_name, 'example.html')
-        with open(example_path, 'r', encoding='utf8') as f:
-            result = f.readline()
-        
+        file_path = PredicePriceDefine.PER_PBR_FILE_PATH_FMT.format(stock_id)
+        with open(file_path, 'r', encoding='utf8') as f:
+            result = f.readline()        
     soup = BeautifulSoup(result, 'html.parser')
     result_tbl = soup.find('table', attrs={'class':'solid_1_padding_4_0_tbl'})
     tr_rows = result_tbl.find_all('tr', id=re.compile(r'row'))
@@ -121,8 +138,8 @@ def get_dataframe(stock_id:str):
         j+=1
     return df
 
-def execute(stock_id, quarter=None):    
-    df = get_dataframe(stock_id)
+def execute(stock_id, quarter=None, cache_data:bool=False):    
+    df = get_dataframe(stock_id, cache_data)
     if df is None:
         print("dataframe is None")
         return None
@@ -130,8 +147,7 @@ def execute(stock_id, quarter=None):
         quarter = df.index[0] if not quarter else quarter
         if "Q" not in quarter:
             quarter = "{}Q{}".format(quarter[:4], quarter[-1])
-        result = df.loc[[quarter], ['四季昂貴均價', '四季合理均價','四季便宜均價']]
-        print(result)
+        result = df.loc[[quarter], ['四季昂貴均價', '四季合理均價','四季便宜均價']]        
         return result
   
 
@@ -145,4 +161,5 @@ if __name__ == '__main__':
         if cnt >= 3:
             quarter =  str(sys.argv[2])
    
-    execute(stock_id, quarter)
+    result = execute(stock_id, quarter, True)
+    print(result)

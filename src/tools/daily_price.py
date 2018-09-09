@@ -1,7 +1,7 @@
 #%%
 # -*- encoding:utf-8 -*-
 import sys, os
-
+from bson.objectid import ObjectId
 import requests
 import io
 import os.path
@@ -107,6 +107,19 @@ def parse_file_to_db(market_type:str, file_path:str):
     print("", end="\n")
     print("done")
 
+def check_update_latest_day(latest_date):
+    #寫入最新股價日期
+    if latest_date is not None :        
+        result = mongo_mgr.find_one("stock", "Outline", {DB_KEY.OBJECT_ID:ObjectId("5b940a041e6fe6eb0d8a53b2")})
+        curr_d = result[DB_KEY.LATEST_DAY] if DB_KEY.LATEST_DAY in result else None
+        if curr_d is None or int(latest_date) > int(curr_d):
+           result = mongo_mgr.upsert("stock", "Outline", {DB_KEY.OBJECT_ID:ObjectId("5b940a041e6fe6eb0d8a53b2")}, 
+           {"$set":
+                {
+                    DB_KEY.LATEST_DAY:latest_date,                 
+                }
+            }) 
+
 def load_range(market_type:str, url_fmt:str, headers:str, start_date:str=None, end_date:str=None, parse_to_db= False, try_load=True):
     if start_date == None:
         start_date = datetime.now().strftime("%Y/%m/%d")
@@ -118,11 +131,11 @@ def load_range(market_type:str, url_fmt:str, headers:str, start_date:str=None, e
     e= end_date.split("/")
     start_date = date(int(s[0]), int(s[1]), int(s[2]))
     end_date = date(int(e[0]), int(e[1]), int(e[2]))
-    
+    latest_date = None
     for single_date in global_func.daterange(start_date, end_date):
         
         file_path = global_func.get_abs_path(define.Define.DAILY_PRICE_FMT.format(market_type, single_date.strftime("%Y%m%d")))
-
+        
         if market_type == define.MarketType.TPEX:
             src_date = single_date.strftime("%Y/%m/%d")
             year = src_date.split('/')[0]
@@ -145,7 +158,8 @@ def load_range(market_type:str, url_fmt:str, headers:str, start_date:str=None, e
                                 if len(i.split('",')) == 17]
 
                 if len(text_arr) > 0:
-                    with open(file_path, 'a+', encoding='utf8') as f:
+                    latest_date = single_date.strftime("%Y%m%d")
+                    with open(file_path, 'a+', encoding='utf8') as f:                        
                         initialize_text = "".join(text_arr) 
                         f.write(initialize_text)
                         f.close()
@@ -158,9 +172,10 @@ def load_range(market_type:str, url_fmt:str, headers:str, start_date:str=None, e
         if parse_to_db:
             print("Parse file {0} to db".format(file_path))
             parse_file_to_db(market_type, file_path)           
-
+    check_update_latest_day(latest_date)
 
 if __name__=="__main__":
-    load_range("twse", define.Define.TWSE_DAILY_PRICE_URL_FMT, define.Define.TWSE_DAILY_PRICE_HEADERS, parse_to_db=True)
-    load_range("tpex", define.Define.TPEX_DAILY_PRICE_URL_FMT, define.Define.TPEX_DAILY_PRICE_HEADERS, parse_to_db=True)
+    #load_range("twse", define.Define.TWSE_DAILY_PRICE_URL_FMT, define.Define.TWSE_DAILY_PRICE_HEADERS, parse_to_db=True)
+    #load_range("tpex", define.Define.TPEX_DAILY_PRICE_URL_FMT, define.Define.TPEX_DAILY_PRICE_HEADERS, parse_to_db=True)
+    check_update_latest_day("20180907")
     pass

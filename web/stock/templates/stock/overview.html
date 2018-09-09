@@ -4,7 +4,7 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <style type="text/css">
             div.paleBlueRows {
-                font-family: "Courier New", Courier, monospace;
+                font-family: "Comic Sans MS", cursive, sans-serif;
                 border: 1px solid #FFFFFF;
                 width: 100%;
                 text-align: left;
@@ -27,7 +27,7 @@
                 font-size: 19px;
                 font-weight: bold;
                 color: #FFFFFF;
-                text-align: center;
+                text-align: left;
                 border-left: 2px solid #FFFFFF;
             }
             .divTable.paleBlueRows .divTableHeading .divTableHead:first-child {
@@ -46,10 +46,10 @@
             .divTableFoot { display: table-footer-group;}
             .divTableBody { display: table-row-group;}
         </style>
-        <title> Overview </title>
+        <title> XStocker </title>
     </head>
     <body>
-        <h1>Record</h1>
+        <h1>Overview</h1>
         <input type="text" id="new_stock_input"  />
         <button onclick="onAddClick()"> Add </button>
         <div class="divTable paleBlueRows" id="root">
@@ -62,19 +62,23 @@
                     <div class="divTableHead">昂貴價</div>
                     <div class="divTableHead">合理價</div>
                     <div class="divTableHead">便宜價</div>
+                    <div class="divTableHead">選項</div>
                 </div>
             </div>
             <div class="divTableBody" id="tbody" >  
             {% if dataset is not None %}
                 {% for stock_id, data in dataset.items %}                                          
                     <div class="divTableRow c_init" name="s_{{ stock_id }}" value="{{data.status}}" task="{{data.task_id}}">
-                        <div class="divTableCell">{{ stock_id }}</div>
-                        <div class="divTableCell">name</div>
-                        <div class="divTableCell">0.00</div>
+                        <div class="divTableCell" >{{ stock_id }}</div>
+                        <div class="divTableCell"> {{ data.basic.name }} </div>
+                        <div class="divTableCell" id = "price_now_c_{{ stock_id }}">{{ data.basic.info.close }}</div>
                         <!-- begin predict price group -->
-                        <div class="divTableCell" id = "price_exp_{{ stock_id }}"> {{data.data.expen}} </div>
-                        <div class="divTableCell" id = "price_res_{{ stock_id }}"> {{data.data.expen}} </div>
-                        <div class="divTableCell" id = "price_chp_{{ stock_id }}"> {{data.data.cheap}} </div>                           
+                        <div class="divTableCell" id = "price_exp_{{ stock_id }}"> {{ data.data.expen }} </div>
+                        <div class="divTableCell" id = "price_res_{{ stock_id }}"> {{ data.data.reson }} </div>
+                        <div class="divTableCell" id = "price_chp_{{ stock_id }}"> {{ data.data.cheap }} </div>  
+                        <div class="divTableCell" id = "toolbar_{{ stock_id }}"> 
+                            <input type="button" id="delbtn_{{ stock_id }}" name="{{ stock_id }}" onclick="onDeleteClick(this.name)" value="移除">
+                        </div>                          
                         <!--end predict price group -->                       
                     </div>    
                 {% endfor %}
@@ -118,7 +122,7 @@
             });              
             function onAddClick() {
                 var new_stock = $("#new_stock_input").val();
-                console.log("new stock: " + new_stock);
+                //console.log("new stock: " + new_stock);
                 var $newdiv1 = $( '<div class="divTableRow c_init" name="s_'+ new_stock + '" value="INIT" task=""></div>' );
                 $($newdiv1).append('<div class="divTableCell">'+new_stock+'</div>');
                 $($newdiv1).append('<div class="divTableCell">name</div>');
@@ -126,17 +130,70 @@
                 $($newdiv1).append('<div class="divTableCell" id = "price_exp_'+ new_stock +'"> </div>');
                 $($newdiv1).append('<div class="divTableCell" id = "price_res_'+ new_stock +'"> </div>');
                 $($newdiv1).append('<div class="divTableCell" id = "price_chp_'+ new_stock +'"> </div>');
-                
+                $($newdiv1).append(
+                    '<div class="divTableCell" id = "toolbar_'+ new_stock +'">'+
+                        '<input type="button" id="delbtn_'+ new_stock +'"name="'+ new_stock +'" onclick="onDeleteClick(this.name)" value="移除">'+
+                    '</div>');
                 $("#tbody").append($newdiv1);
                 
+            }
+
+            function onDeleteClick(clicked_name) {
+                console.log("Click delete " +  clicked_name);
+                 $.ajax(
+                    {
+                        url:"/stock/delete_stock/",
+                        type:'POST',
+                        dataType:'json',
+                        data:{stock_id: clicked_name},
+                        success: function (response) {
+                            console.log("onDeleteClick sstatus"+ response.status +" stock_id: " + response.stock_id );  
+                            $('div[name=s_' + response.stock_id + ']').remove();                                  
+                        }
+            
+                    }
+                );
+            }
+
+            function update_price_color(stock_id) {
+                var now_price = parseInt($('#price_now_c_'+ stock_id).text());
+                var expensive = parseInt($('#price_exp_'+ stock_id).text());   
+                var resonable = parseInt($('#price_res_'+ stock_id).text());  
+                var cheap = parseInt($('#price_chp_'+ stock_id).text()); 
+
+                if (isNaN(now_price) || isNaN(expensive) || isNaN(resonable) || isNaN(cheap)  ) {
+                    return;
+                }
+                else {
+                    var color_name;
+                    if (now_price <= cheap) {
+                        color_name = 'Green';
+                    }
+                    else if (now_price > cheap && now_price <= resonable) {
+                        color_name = 'Blue';
+                    }
+                    else if (now_price > resonable && now_price <= expensive) {
+                        color_name = 'Orange';
+                    }
+                    else if (now_price > expensive) {
+                        color_name = 'Red';
+                    }
+                    else {
+                        color_name = 'Black';
+                    }
+                    $('#price_now_c_'+ stock_id).css("color", color_name);
+                }
+
             }
 
             function check_update_predict_price() {
                 $(".divTableRow.c_init:not([value='SUCCESS'])").each(function(index, element) {  
                     var task = $(element).attr('task');                 
-                    console.log("s name = "+ $(element).attr('name') + " task id: " + task);  
+                    //console.log("s name = "+ $(element).attr('name') + " task id: " + task);  
                     var value_status = $(element).attr('value').trim();               
                     if (value_status == "PENDING" ) {
+                        //console.log("Pending set WAITING" + $(element).attr('name'));
+                        $(element).attr('value', "WAITING")
                         $.ajax(
                             {
                                 url:"/stock/query/",
@@ -157,6 +214,8 @@
                         );
                     }
                     else if(value_status == "INIT") {
+                        //console.log("INIT set WAITING" + $(element).attr('name'));
+                        $(element).attr('value', "WAITING")
                         $.ajax(
                             {
                                 url:"/stock/init/",
@@ -164,7 +223,7 @@
                                 dataType:'json',
                                 data:{stock_name: $(element).attr('name')},
                                 success: function (response) {
-                                    console.log("init status: " + response.status + " stock_id: " + response.stock_id + " task: " + response.task); 
+                                    //console.log("init status: " + response.status + " stock_id: " + response.stock_id + " task: " + response.task); 
                                     
                                     $('div[name=s_' + response.stock_id + ']').attr("value",  response.status);
                                     $('div[name=s_' + response.stock_id + ']').attr("task",  response.task);
@@ -172,6 +231,7 @@
                                         $('#price_exp_'+ response.stock_id).text(response.value["expen"]);   
                                         $('#price_res_'+ response.stock_id).text(response.value["reson"]);  
                                         $('#price_chp_'+ response.stock_id).text(response.value["cheap"]);  
+                                        update_price_color(response.stock_id);
                                     } 
                                           
                                 }
@@ -185,7 +245,7 @@
 
             $(                
                 function() {
-                    interval_handler = setInterval(check_update_predict_price, 5000);                    
+                    interval_handler = setInterval(check_update_predict_price, 1000);                    
                 }
             );
         </script>
