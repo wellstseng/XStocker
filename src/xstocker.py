@@ -8,10 +8,18 @@ from predict_price import manager
 from define import DB_KEY
 mongo_mgr = MongoManager("mongodb://stock:stock@192.168.1.14:27017/stock")
 from datetime import datetime
-def get_basic_info(stock_id:str):
-    result = mongo_mgr.find_one("stock", "Outline", {DB_KEY.OBJECT_ID:ObjectId("5b940a041e6fe6eb0d8a53b2")})
-    latest_day = result[DB_KEY.LATEST_DAY]
+def get_basic_info(stock_id:str, date_time:str=None):
+    print("date time = " + str(date_time))
+    if date_time is None or date_time.strip() == "":
+        print("load newest")
+        result = mongo_mgr.find_one("stock", "Outline", {DB_KEY.OBJECT_ID:ObjectId("5b940a041e6fe6eb0d8a53b2")})
+        latest_day = result[DB_KEY.LATEST_DAY]
+    else:
+        print("load date time:" + date_time)
+        latest_day = date_time.replace('/', '')
+
     r = mongo_mgr.find_one("stock", "DailyInfo_{}".format(latest_day[:6]), {'stkid':stock_id })
+    
     daily_info = r["items"][latest_day]
     name = r["name"]
     print("name {}  daily_price: {}".format(name, daily_info))
@@ -31,8 +39,8 @@ def check_db_has_predict_price(stock_id:str, quarter:str=None):
 def check_res_has_per_pbr_data(stock_id):
     return manager.has_per_pbr_file(stock_id)
 
-def get_predict_price2(stock_id:str):
-    df = manager.execute(stock_id)
+def get_predict_price2(stock_id:str, quarter:str=None):
+    df = manager.execute(stock_id, quarter, True)
     expensive =  df.iloc[0, [0]].values[0]
     resonable =  df.iloc[0, [1]].values[0]
     cheap =  df.iloc[0, [2]].values[0]

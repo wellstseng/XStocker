@@ -50,7 +50,8 @@ def query(request):
     dic = request.POST.dict()
     stock_id = dic["stock_name"].replace("s_","")
     task = dic["task_id"]
-    logger.info("check task {} status".format(task))
+    quarter = dic["quarter"] if "quarter" in dic else None
+    logger.info("check task {} status   quarter {}".format(task, str(quarter)))
     filt = TaskResult.objects.filter(task_id=task)
     logger.info("result: {}".format(filt))
     if len(filt) > 0:
@@ -58,7 +59,7 @@ def query(request):
         if result.status == "PENDING":
             new_dic = {"status":result.status}
         else:
-            tbl = xstocker.get_predict_price2(stock_id)  
+            tbl = xstocker.get_predict_price2(stock_id, quarter)  
             new_dic = {"status":result.status, "stock_id": stock_id, "value":tbl}
     else:
         new_dic = {"status":"PENDING", "stock_id": stock_id}
@@ -68,11 +69,13 @@ def init(request):
     logger.info("init:" + str(request.POST) + " user " + str(request.user))
     dic = request.POST.dict()
     stock_id = dic["stock_name"].replace("s_","")
-
-    json_tbl = {"status":"INIT",  "stock_id":stock_id, "task":None, "value":None}
+    quarter = dic["quarter"] if "quarter" in dic else None
+    date_time = dic["date_time"] if "date_time" in dic else None
+    json_tbl = {"status":"INIT",  "stock_id":stock_id, "task":None, "value":None, "basic":None}
+    json_tbl["basic"] = xstocker.get_basic_info(stock_id, date_time)
     if xstocker.check_res_has_per_pbr_data(stock_id):        
-        predict_price_tbl = xstocker.get_predict_price2(stock_id)
-        logger.info("has data in db:"+ stock_id + "price tbl: " + str(predict_price_tbl))
+        predict_price_tbl = xstocker.get_predict_price2(stock_id, quarter)
+        logger.info("has data in db:"+ stock_id + "price tbl: " + str(predict_price_tbl) + " quarter: " + str(quarter))
         json_tbl["status"] = "SUCCESS"
         json_tbl["value"] = predict_price_tbl
     else:

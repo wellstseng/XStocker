@@ -1,64 +1,35 @@
+
+{% load static %}
 <!DOCTYPE html>
 <html>
     <head>
+        <link rel="stylesheet" type="text/css" href="{% static "css/overview.css" %}">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <style type="text/css">
-            div.paleBlueRows {
-                font-family: "Comic Sans MS", cursive, sans-serif;
-                border: 1px solid #FFFFFF;
-                width: 100%;
-                text-align: left;
-            }
-            .divTable.paleBlueRows .divTableCell, .divTable.paleBlueRows .divTableHead {
-                border: 1px solid #FFFFFF;
-                padding: 3px 2px;
-            }
-            .divTable.paleBlueRows .divTableBody .divTableCell {
-                font-size: 17px;
-            }
-            .divTable.paleBlueRows .divTableRow:nth-child(even) {
-                background: #D0E4F5;
-            }
-            .divTable.paleBlueRows .divTableHeading {
-                background: #0B6FA4;
-                border-bottom: 5px solid #FFFFFF;
-            }
-            .divTable.paleBlueRows .divTableHeading .divTableHead {
-                font-size: 19px;
-                font-weight: bold;
-                color: #FFFFFF;
-                text-align: left;
-                border-left: 2px solid #FFFFFF;
-            }
-            .divTable.paleBlueRows .divTableHeading .divTableHead:first-child {
-                border-left: none;
-            }
-
-            .paleBlueRows .tableFootStyle {
-                font-size: 14px;
-            }
-            /* DivTable.com */
-            .divTable{ display: table; }
-            .divTableRow { display: table-row; }
-            .divTableHeading { display: table-header-group;}
-            .divTableCell, .divTableHead { display: table-cell;}
-            .divTableHeading { display: table-header-group;}
-            .divTableFoot { display: table-footer-group;}
-            .divTableBody { display: table-row-group;}
-        </style>
+        <script src="{% static "js/handlePredictPrice.js" %}"></script>
+        <script src="{% static "js/onButtonClick.js" %}"></script>     
+        <script src="{% static "js/mgr.js" %}"></script>   
         <title> XStocker </title>
     </head>
     <body>
         <h1>Overview</h1>
         <input type="text" id="new_stock_input"  />
-        <button onclick="onAddClick()"> Add </button>
+        <button onclick="onAddClick()"> Add </button>        
+        <input type="text" id="select_quarter"  />
+        <input type="text" id="select_date"  />
+        <button onclick="onUpdateClick()"> UpdateDate </button>        
         <div class="divTable paleBlueRows" id="root">
             {{ csrf_input }}
             <div class="divTableHeading">
                 <div class="divTableRow">
-                    <div class="divTableHead">股票代號</div>
+                    <div class="divTableHead">
+                        股票代號
+                        <button onclick="onSortIdClick()"> Sort </button>
+                    </div>
                     <div class="divTableHead">股票名稱</div>
-                    <div class="divTableHead">最新收盤價</div>
+                    <div class="divTableHead">
+                        最新收盤價
+                        <button onclick="onSortCloseClick()"> Sort </button>
+                    </div>
                     <div class="divTableHead">昂貴價</div>
                     <div class="divTableHead">合理價</div>
                     <div class="divTableHead">便宜價</div>
@@ -69,9 +40,13 @@
             {% if dataset is not None %}
                 {% for stock_id, data in dataset.items %}                                          
                     <div class="divTableRow c_init" name="s_{{ stock_id }}" value="{{data.status}}" task="{{data.task_id}}">
-                        <div class="divTableCell" >{{ stock_id }}</div>
-                        <div class="divTableCell"> {{ data.basic.name }} </div>
-                        <div class="divTableCell" id = "price_now_c_{{ stock_id }}">{{ data.basic.info.close }}</div>
+                        <div class="divTableCell" id = "id_{{ stock_id }}">{{ stock_id }}</div>
+                        <div class="divTableCell" id = "name_{{ stock_id }}">  
+                            <a target="_blank" href="https://goodinfo.tw/StockInfo/StockBzPerformance.asp?STOCK_ID={{ stock_id }}&YEAR_PERIOD=9999&RPT_CAT=M_QUAR">
+                                {{ data.basic.name }}
+                            </a>
+                        </div>
+                        <div class="divTableCell cPrice" id = "price_now_c_{{ stock_id }}">{{ data.basic.info.close }}</div>
                         <!-- begin predict price group -->
                         <div class="divTableCell" id = "price_exp_{{ stock_id }}"> {{ data.data.expen }} </div>
                         <div class="divTableCell" id = "price_res_{{ stock_id }}"> {{ data.data.reson }} </div>
@@ -86,13 +61,10 @@
             </div>     
         </div>
 
-       
-        <script>     
-
-            /**
-            * setup JQuery's AJAX methods to setup CSRF token in the request before sending it off.
-            * http://stackoverflow.com/questions/5100539/django-csrf-check-failing-with-an-ajax-post-request
-            */
+        <script>  
+            function onUpdateQuarterClick() {                
+                $(".divTableRow.c_init").attr('value', 'INIT');
+            }
 
             function getCookie(name)
             {
@@ -119,135 +91,8 @@
                         xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
                     }
                 } 
-            });              
-            function onAddClick() {
-                var new_stock = $("#new_stock_input").val();
-                //console.log("new stock: " + new_stock);
-                var $newdiv1 = $( '<div class="divTableRow c_init" name="s_'+ new_stock + '" value="INIT" task=""></div>' );
-                $($newdiv1).append('<div class="divTableCell">'+new_stock+'</div>');
-                $($newdiv1).append('<div class="divTableCell">name</div>');
-                $($newdiv1).append('<div class="divTableCell">0.00</div>');
-                $($newdiv1).append('<div class="divTableCell" id = "price_exp_'+ new_stock +'"> </div>');
-                $($newdiv1).append('<div class="divTableCell" id = "price_res_'+ new_stock +'"> </div>');
-                $($newdiv1).append('<div class="divTableCell" id = "price_chp_'+ new_stock +'"> </div>');
-                $($newdiv1).append(
-                    '<div class="divTableCell" id = "toolbar_'+ new_stock +'">'+
-                        '<input type="button" id="delbtn_'+ new_stock +'"name="'+ new_stock +'" onclick="onDeleteClick(this.name)" value="移除">'+
-                    '</div>');
-                $("#tbody").append($newdiv1);
-                
-            }
-
-            function onDeleteClick(clicked_name) {
-                console.log("Click delete " +  clicked_name);
-                 $.ajax(
-                    {
-                        url:"/stock/delete_stock/",
-                        type:'POST',
-                        dataType:'json',
-                        data:{stock_id: clicked_name},
-                        success: function (response) {
-                            console.log("onDeleteClick sstatus"+ response.status +" stock_id: " + response.stock_id );  
-                            $('div[name=s_' + response.stock_id + ']').remove();                                  
-                        }
-            
-                    }
-                );
-            }
-
-            function update_price_color(stock_id) {
-                var now_price = parseInt($('#price_now_c_'+ stock_id).text());
-                var expensive = parseInt($('#price_exp_'+ stock_id).text());   
-                var resonable = parseInt($('#price_res_'+ stock_id).text());  
-                var cheap = parseInt($('#price_chp_'+ stock_id).text()); 
-
-                if (isNaN(now_price) || isNaN(expensive) || isNaN(resonable) || isNaN(cheap)  ) {
-                    return;
-                }
-                else {
-                    var color_name;
-                    if (now_price <= cheap) {
-                        color_name = 'Green';
-                    }
-                    else if (now_price > cheap && now_price <= resonable) {
-                        color_name = 'Blue';
-                    }
-                    else if (now_price > resonable && now_price <= expensive) {
-                        color_name = 'Orange';
-                    }
-                    else if (now_price > expensive) {
-                        color_name = 'Red';
-                    }
-                    else {
-                        color_name = 'Black';
-                    }
-                    $('#price_now_c_'+ stock_id).css("color", color_name);
-                }
-
-            }
-
-            function check_update_predict_price() {
-                $(".divTableRow.c_init:not([value='SUCCESS'])").each(function(index, element) {  
-                    var task = $(element).attr('task');                 
-                    //console.log("s name = "+ $(element).attr('name') + " task id: " + task);  
-                    var value_status = $(element).attr('value').trim();               
-                    if (value_status == "PENDING" ) {
-                        //console.log("Pending set WAITING" + $(element).attr('name'));
-                        $(element).attr('value', "WAITING")
-                        $.ajax(
-                            {
-                                url:"/stock/query/",
-                                type:'POST',
-                                dataType:'json',
-                                data:{stock_name: $(element).attr('name'), task_id:task},
-                                success: function (response) {
-                                    //console.log("status: " + response.status + " stock_id: " + response.stock_id + " value: " + response.value);  
-                                    $('div[name=s_' + response.stock_id + ']').attr("value",  response.status);
-                                    if (response.status == "SUCCESS") {
-                                        $('#price_exp_'+ response.stock_id).text(response.value["expen"]);   
-                                        $('#price_res_'+ response.stock_id).text(response.value["reson"]);  
-                                        $('#price_chp_'+ response.stock_id).text(response.value["cheap"]);  
-                                    }        
-                                }
-                    
-                            }
-                        );
-                    }
-                    else if(value_status == "INIT") {
-                        //console.log("INIT set WAITING" + $(element).attr('name'));
-                        $(element).attr('value', "WAITING")
-                        $.ajax(
-                            {
-                                url:"/stock/init/",
-                                type:'POST',
-                                dataType:'json',
-                                data:{stock_name: $(element).attr('name')},
-                                success: function (response) {
-                                    //console.log("init status: " + response.status + " stock_id: " + response.stock_id + " task: " + response.task); 
-                                    
-                                    $('div[name=s_' + response.stock_id + ']').attr("value",  response.status);
-                                    $('div[name=s_' + response.stock_id + ']').attr("task",  response.task);
-                                    if (response.status == "SUCCESS") {
-                                        $('#price_exp_'+ response.stock_id).text(response.value["expen"]);   
-                                        $('#price_res_'+ response.stock_id).text(response.value["reson"]);  
-                                        $('#price_chp_'+ response.stock_id).text(response.value["cheap"]);  
-                                        update_price_color(response.stock_id);
-                                    } 
-                                          
-                                }
-                    
-                            }
-                        );
-                    }
-                });
-            };
-            var interval_handler;
-
-            $(                
-                function() {
-                    interval_handler = setInterval(check_update_predict_price, 1000);                    
-                }
-            );
+            });   
+           
         </script>
     </body>
 </html>

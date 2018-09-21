@@ -79,9 +79,10 @@ def get_dataframe(stock_id:str, cache:bool=False):
     if not has_per_pbr_file(stock_id):       
         result = load_per_pbr_data(stock_id, cache)
     else:
+        print("load per/pbr from source", stock_id)
         file_path = PredicePriceDefine.PER_PBR_FILE_PATH_FMT.format(stock_id)
         with open(file_path, 'r', encoding='utf8') as f:
-            result = f.readline()        
+            result = f.readline()  
     soup = BeautifulSoup(result, 'html.parser')
     result_tbl = soup.find('table', attrs={'class':'solid_1_padding_4_0_tbl'})
     tr_rows = result_tbl.find_all('tr', id=re.compile(r'row'))
@@ -138,7 +139,7 @@ def get_dataframe(stock_id:str, cache:bool=False):
         j+=1
     return df
 
-def execute(stock_id, quarter=None, cache_data:bool=False):    
+def execute(stock_id, quarter:str=None, cache_data:bool=False):    
     df = get_dataframe(stock_id, cache_data)
     if df is None:
         print("dataframe is None")

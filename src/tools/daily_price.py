@@ -119,6 +119,7 @@ def check_update_latest_day(latest_date):
                     DB_KEY.LATEST_DAY:latest_date,                 
                 }
             }) 
+        print("upsert latest date: " , str(result))
 
 def load_range(market_type:str, url_fmt:str, headers:str, start_date:str=None, end_date:str=None, parse_to_db= False, try_load=True):
     if start_date == None:
@@ -157,8 +158,9 @@ def load_range(market_type:str, url_fmt:str, headers:str, start_date:str=None, e
                             for i in text.split('\n') 
                                 if len(i.split('",')) == 17]
 
-                if len(text_arr) > 0:
+                if len(text_arr) > 0:                    
                     latest_date = single_date.strftime("%Y%m%d")
+                    print("latest date: ", latest_date)
                     with open(file_path, 'a+', encoding='utf8') as f:                        
                         initialize_text = "".join(text_arr) 
                         f.write(initialize_text)
@@ -175,7 +177,6 @@ def load_range(market_type:str, url_fmt:str, headers:str, start_date:str=None, e
     check_update_latest_day(latest_date)
 
 if __name__=="__main__":
-    #load_range("twse", define.Define.TWSE_DAILY_PRICE_URL_FMT, define.Define.TWSE_DAILY_PRICE_HEADERS, parse_to_db=True)
-    #load_range("tpex", define.Define.TPEX_DAILY_PRICE_URL_FMT, define.Define.TPEX_DAILY_PRICE_HEADERS, parse_to_db=True)
-    check_update_latest_day("20180907")
+    load_range("twse", define.Define.TWSE_DAILY_PRICE_URL_FMT, define.Define.TWSE_DAILY_PRICE_HEADERS, parse_to_db=True)
+    load_range("tpex", define.Define.TPEX_DAILY_PRICE_URL_FMT, define.Define.TPEX_DAILY_PRICE_HEADERS, parse_to_db=True)
     pass
