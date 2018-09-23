@@ -19,8 +19,10 @@ def get_basic_info(stock_id:str, date_time:str=None):
         latest_day = date_time.replace('/', '')
 
     r = mongo_mgr.find_one("stock", "DailyInfo_{}".format(latest_day[:6]), {'stkid':stock_id })
-    
-    daily_info = r["items"][latest_day]
+    daily_info = None
+    print("r[\"items\"]:  "  , str(r), "st ", stock_id , " latest_day[:6]", latest_day[:6])
+    if latest_day in r["items"]:
+        daily_info = r["items"][latest_day]
     name = r["name"]
     print("name {}  daily_price: {}".format(name, daily_info))
     return {"name": name, "info":daily_info}

@@ -13,14 +13,14 @@ class Define:
     BRANCH_LIST = FILE_PATH + '/res/branchList.csv'
     LEGAL_PERSON_PATH_FMT = FILE_PATH + '/res/legalperson/{0}_M{1}.csv'
     SRC_DATA_PATH_FMT = FILE_PATH + "/data/{0}/{1}"
-    TWSE_MARGIN_URL_FMT = 'http://www.twse.com.tw/exchangeReport/MI_MARGN?response=csv&date={0}&selectType=ALL'
+    TWSE_MARGIN_URL_FMT = 'http://www.tse.com.tw/exchangeReport/MI_MARGN?response=csv&date={0}&selectType=ALL'
     TWSE_MARGIN_REQ_HEADERS = {
         "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36",        
         "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
         "Accept-Encoding":"gzip, deflate",
         "Accept-Language":"zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7",
         "Connection":"keep-alive",
-        "Host":"www.twse.com.tw",
+        "Host":"www.tse.com.tw",
         "Upgrade-Insecure-Requests":"1"
     }
     

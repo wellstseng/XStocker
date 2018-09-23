@@ -5,7 +5,7 @@ logger = logging.getLogger('django')
 
 class Record(models.Model):
     stock_id = models.CharField(max_length=20)
-
+    #categories = models.ArrayField(models.IntegerField(), null=True, blank=True)
     class Meta:
         abstract = True
 
@@ -18,6 +18,8 @@ class Overview(models.Model):
     stock_list = models.ArrayModelField(
         model_container=Record,
     )
+
+   # category_groups = models.ArrayField(models.CharField(max_length=15), null=True, blank=True)
 
     def add_stock(self, _stock_id:str):
         record = Record(stock_id=_stock_id)

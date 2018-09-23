@@ -12,12 +12,39 @@
     </head>
     <body>
         <h1>Overview</h1>
-        <input type="text" id="new_stock_input"  />
-        <button onclick="onAddClick()"> Add </button>        
-        <input type="text" id="select_quarter"  />
-        <input type="text" id="select_date"  />
-        <button onclick="onUpdateClick()"> UpdateDate </button>        
-        <div class="divTable paleBlueRows" id="root">
+
+        <div class="divTable" id="root">
+            <div class="divTableBody" >
+                <div class="divTableRow"> 
+                    <div class="divTableRow">
+                        股號
+                        <input type="text" id="new_stock_input" /> 
+                    </div>
+                        <div class="divTableRow">
+                        <button onclick="onAddClick()"> 新增 </button>  
+                    </div>
+                </div>
+                    
+                 <div class="divTableRow">          
+                    季度
+                    <select id="select_quarter">
+                　      <option value=""></option>
+                　      <option value="2018Q2">2018Q2</option>
+                　      <option value="2018Q1">2018Q1</option>
+                　      <option value="2017Q4">2017Q4</option>
+                        <option value="2017Q3">2017Q4</option>
+                    </select>
+                </div>
+                <div class="divTableRow">
+                    日期
+                    <input type="text" id="select_date"  />
+                </div>
+                <div class="divTableRow">
+                    <button onclick="onUpdateClick()"> 更新 </button>  
+                </div>  
+            </div>
+        </div>    
+        <div class="divTable paleBlueRows" id="parent">
             {{ csrf_input }}
             <div class="divTableHeading">
                 <div class="divTableRow">
@@ -60,7 +87,6 @@
             {% endif %} 
             </div>     
         </div>
-
         <script>  
             function onUpdateQuarterClick() {                
                 $(".divTableRow.c_init").attr('value', 'INIT');
