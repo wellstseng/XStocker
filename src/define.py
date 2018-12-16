@@ -36,16 +36,16 @@ class Define:
         "Upgrade-Insecure-Requests":"1",
         "Referer": "http://www.tpex.org.tw/web/stock/margin_trading/margin_balance/margin_bal.php?l=zh-tw"
     }
-    TWSE_DAYTRADING_URL_FMT = 'http://www.twse.com.tw/exchangeReport/TWTB4U?response=csv&date={0}&selectType=All'
+    TWSE_DAYTRADING_URL_FMT = 'http://www.tse.com.tw/exchangeReport/TWTB4U?response=csv&date={0}&selectType=All'
     TWSE_DAYTRADING_REQ_HEADERS = {
         "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36",
-        "Referer":"http://www.twse.com.tw/zh/page/trading/exchange/TWTB4U.html",
+        "Referer":"http://www.tse.com.tw/zh/page/trading/exchange/TWTB4U.html",
         "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
         "Accept-Encoding":"gzip, deflate",
         "Accept-Language":"zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7",
         "Connection":"keep-alive",
         "Cookie":"_ga=GA1.3.2036274003.1532407181; _gid=GA1.3.1849235811.1532407181; JSESSIONID=9994EBB73146154704AC81F3F5770114; _gat=1",
-        "Host":"www.twse.com.tw",
+        "Host":"www.tse.com.tw",
         "Upgrade-Insecure-Requests":"1"
     }
     TPEX_DAYTRADING_URL_FMT = 'http://www.tpex.org.tw/web/stock/trading/intraday_stat/intraday_trading_stat_result.php?l=zh-tw&d={0}&s=0,asc,0&o=csv'

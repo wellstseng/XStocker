@@ -179,4 +179,4 @@ def load_range(market_type:str, url_fmt:str, headers:str, start_date:str=None, e
 if __name__=="__main__":
     load_range("twse", define.Define.TWSE_DAILY_PRICE_URL_FMT, define.Define.TWSE_DAILY_PRICE_HEADERS, parse_to_db=True)
     load_range("tpex", define.Define.TPEX_DAILY_PRICE_URL_FMT, define.Define.TPEX_DAILY_PRICE_HEADERS, parse_to_db=True)
-    pass
+    
