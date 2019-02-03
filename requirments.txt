@@ -38,7 +38,6 @@ plotly==3.2.1
 pprint==0.1
 PyInstaller==3.3.1
 pymongo==3.7.1
-pypiwin32==223
 python-dateutil==2.7.3
 pytz==2018.5
 requests==2.19.1
