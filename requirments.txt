@@ -47,7 +47,9 @@ sqlparse==0.2.4
 traitlets==4.3.2
 twstock==1.1.0
 urllib3==1.23
+uWSGI==2.0.17.1
 vine==1.1.4
 virtualenv==16.0.0
 virtualenv-clone==0.3.0
 Werkzeug==0.14.1
+

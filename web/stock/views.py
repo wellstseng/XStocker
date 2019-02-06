@@ -1,3 +1,7 @@
+import sys,os
+from web.settings import BASE_DIR
+sys.path.append(os.path.join(os.path.dirname(BASE_DIR),"src"))
+
 from django.shortcuts import render
 from django.views import generic
 from django.http import  HttpResponse, JsonResponse
@@ -9,9 +13,6 @@ import time
 logger = logging.getLogger('django')
 
 # CUSTOME import project path
-import sys,os
-from web.settings import BASE_DIR
-sys.path.append(os.path.join(os.path.dirname(BASE_DIR),"src"))
 import xstocker
 
 import asyncio
