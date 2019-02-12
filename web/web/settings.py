@@ -23,9 +23,9 @@ SECRET_KEY = 'btmhgev3xqhwz&7szbgr@+v7&d_pkn^-23@(t%j=47oh8(sxmv'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.1.14']
+ALLOWED_HOSTS = ['192.168.1.14', 'localhost', '127.0.0.1']
 
-STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+STATIC_ROOT = os.path.join(BASE_DIR, "static/").replace('\\', '/')
 
 # Application definition
 
@@ -55,7 +55,7 @@ ROOT_URLCONF = 'web.urls'
 TEMPLATES = [   
     {
         'BACKEND': 'django.template.backends.jinja2.Jinja2',
-        'DIRS': [os.path.join(BASE_DIR, 'templates'),],
+        'DIRS': [os.path.join(BASE_DIR, 'templates'),os.path.join(BASE_DIR, 'static').replace('\\', '/')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -142,7 +142,14 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-LOGIN_REDIRECT_URL = "/stock/overview"
+
+STATICFILES_DIRS = (
+    ('css', os.path.join(STATIC_ROOT, 'css').replace('\\', '/')),
+    ('images', os.path.join(STATIC_ROOT, 'images').replace('\\', '/')),
+    ('fonts', os.path.join(STATIC_ROOT, 'fonts').replace('\\', '/')),
+    ('js', os.path.join(STATIC_ROOT, 'js').replace('\\', '/')),
+)
 
 #BROKER_URL = 'amqp://root:root@192.168.1.14:5672/'
 CELERY_RESULT_BACKEND = 'django-db'
+LOGIN_REDIRECT_URL = "/stock/overview/"
