@@ -9,9 +9,11 @@ try:
     from web.web.settings import BASE_DIR
 except:
     from web.settings import BASE_DIR
-sys.path.append(os.path.join(os.path.dirname(BASE_DIR),"src"))
-print(sys.path)
-from predict_price import manager
+print("task path: " + str(sys.path))
+try:
+    from predict_price import manager
+except:
+    from src.predict_price import manager
 
 cnt = 0
 

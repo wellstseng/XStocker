@@ -7,7 +7,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'web.settings')
 
 app = Celery('web',
              backend='amqp',
-             broker='amqp://web:web@192.168.1.14:5672',
+             broker='amqp://admin:Y3K2RO0zWmwB4dtHmrre@10.140.0.3:5672',
              include=['web.tasks', 'stock.tasks'])
 
 # Using a string here means the worker doesn't have to serialize
