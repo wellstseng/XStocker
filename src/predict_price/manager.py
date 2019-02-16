@@ -9,12 +9,16 @@ import pandas as pd
 import numpy as np
 import sys,os
 import time
+import platform
 TEST_MODE = False
 
 class PredicePriceDefine:
     LOCK = False
     CD_TIME = 10
-    PER_PBR_FILE_PATH_FMT = "/home/www/XStocker/src/predict_price/res/PER_PBR_{}.html"
+    if platform.system() == "Linux":
+        PER_PBR_FILE_PATH_FMT = "/home/www/XStocker/src/predict_price/res/PER_PBR_{}.html"
+    else:
+        PER_PBR_FILE_PATH_FMT = "C:/Github/XStocker/src/predict_price/res/PER_PBR_{}.html"
 
 def has_per_pbr_file(stock_id):
     file_path = PredicePriceDefine.PER_PBR_FILE_PATH_FMT.format(stock_id)

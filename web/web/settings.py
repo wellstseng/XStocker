@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'stock.apps.StockConfig',
+    'resume.apps.ResumeConfig',
     'django_celery_results',
 ]
 
@@ -148,6 +149,7 @@ STATICFILES_DIRS = (
     ('images', os.path.join(STATIC_ROOT, 'images').replace('\\', '/')),
     ('fonts', os.path.join(STATIC_ROOT, 'fonts').replace('\\', '/')),
     ('js', os.path.join(STATIC_ROOT, 'js').replace('\\', '/')),
+    ('vendor', os.path.join(STATIC_ROOT, 'vendor').replace('\\', '/')),
 )
 
 #BROKER_URL = 'amqp://root:root@192.168.1.14:5672/'

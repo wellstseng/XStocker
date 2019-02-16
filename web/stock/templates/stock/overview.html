@@ -14,7 +14,8 @@
         <h1>Overview</h1>
 
         <div class="divTable" id="root">
-            <div class="divTableBody" >
+            {% if request.user.is_authenticated %}
+            <div class="divTableBody" >                
                 <div class="divTableRow"> 
                     <div class="divTableRow">
                         股號
@@ -67,6 +68,7 @@
                     <button onclick="onUpdateClick()"> 更新 </button>  
                 </div>  
             </div>
+            {% endif %}
         </div>    
         <div class="divTable paleBlueRows" id="parent">
             {{ csrf_input }}
