@@ -10,6 +10,7 @@ from django_celery_results.models import TaskResult
 from .tasks import load_per_pbr_data
 import logging    
 import time
+
 logger = logging.getLogger('django')
 
 # CUSTOME import project path
@@ -33,8 +34,8 @@ class RecordOverview(generic.ListView):
         
         if userdata != None:    
             stk_list = userdata.stock_list
-        else:
-            stk_list={2377, 3546, 3324, 2317,1201,2492,1477,2610} #TODO 讀外部清單
+        else:            
+            stk_list=xstocker.load_list()
         for record in stk_list:
             stock_id = str(record)
             json_tbl = {"status":"INIT",  "data":None, "task":None, "basic":None}

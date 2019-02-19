@@ -18,7 +18,7 @@ class PredicePriceDefine:
     if platform.system() == "Linux":
         PER_PBR_FILE_PATH_FMT = "/home/www/XStocker/src/predict_price/res/PER_PBR_{}.html"
     else:
-        PER_PBR_FILE_PATH_FMT = "C:/Github/XStocker/src/predict_price/res/PER_PBR_{}.html"
+        PER_PBR_FILE_PATH_FMT = "D:/Github/XStocker/src/predict_price/res/PER_PBR_{}.html"
 
 def has_per_pbr_file(stock_id):
     file_path = PredicePriceDefine.PER_PBR_FILE_PATH_FMT.format(stock_id)

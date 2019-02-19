@@ -6,6 +6,8 @@ from predict_price import db_manager
 from tools.mongo import MongoManager
 from predict_price import manager
 from define import DB_KEY
+import numpy
+from tools import stocklist
 mongo_mgr = MongoManager("mongodb://stock:stock@192.168.1.14:27017/stock")
 from datetime import datetime
 def get_basic_info(stock_id:str, date_time:str=None):
@@ -20,12 +22,20 @@ def get_basic_info(stock_id:str, date_time:str=None):
 
     r = mongo_mgr.find_one("stock", "DailyInfo_{}".format(latest_day[:6]), {'stkid':stock_id })
     daily_info = None
-   # print("r[\"items\"]:  "  , str(r), "st ", stock_id , " latest_day[:6]", latest_day[:6])
-    if latest_day in r["items"]:
+    name = None
+    print("r[\"items\"]:  "  , str(r), "st ", stock_id , " latest_day[:6]", latest_day[:6])
+    if r and latest_day in r["items"]:
         daily_info = r["items"][latest_day]
-    name = r["name"]
-#    print("name {}  daily_price: {}".format(name, daily_info))
+    if r:
+        name = r["name"]
+    print("name {}  daily_price: {}".format(name, daily_info))
     return {"name": name, "info":daily_info}
+
+def load_list():
+    twse = stocklist.StockListHolder.read_stock_ids(2)
+    tpex = stocklist.StockListHolder.read_stock_ids(2)
+    
+    return numpy.append(twse, tpex).tolist()
 
 def get_predict_price(stock_id:str):
     tbl = db_manager.fetch_predict_price(stock_id)[1]
@@ -50,3 +60,6 @@ def get_predict_price2(stock_id:str, quarter:str=None):
         DB_KEY.EXPENSIVE:expensive, 
         DB_KEY.RESONABLE:resonable, 
         DB_KEY.CHEAP:cheap}
+
+if __name__ == '__main__':
+    print (str(load_list()))
