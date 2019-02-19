@@ -1,27 +1,28 @@
-#²��
-�ϥ�Django�إߤ��ӤH����
-�n�J��i�d�߭ӪѦX�z����
+#簡介
+使用Django建立之個人網頁
+可查詢個股合理價格
+登入後可個別查詢
 
-##�\��
-1. �����C�ѤU��6�I����}�������ҥ�һP�d�R���ߤ��C�馬�L��Ƥ��R�æs�JmongoDB��Ʈw
-2. �U��GoodInfo�ӪѸg���Z�ĭp��X�z����
-3. ����ӪѦ��L���P�X�z�������Y�ѨϥΪ̰Ѧ�
+##功能
+1. 本機每天下午6點執行腳本爬取證交所與櫃買中心之每日收盤資料分析並存入mongoDB資料庫
+2. 下載GoodInfo個股經營績效計算合理價格
+3. 比較個股收盤價與合理價之關係供使用者參考
 
 
-# ���һݨD
-## �@�~�t�� 
+# 環境需求
+## 作業系統 
 CentOS7
 
-## ��Ʈw����
+## 資料庫環境
 MongoDB
 
-## �ݨD�A��
+## 需求服務
 python3.6.6
 pip3.6
 nginx
 rabbitmq
 
-#�G�p
+#佈署
 ## instance 1
 nginx
 python3.6.6
@@ -30,14 +31,14 @@ celery
 ## instance 2
 mongoDB
 
-#���O
-## Django����
+#指令
+## Django測試
 cd web
 python .\manage.py runserver
 
 ## Celery
 cd web
-python3 -m celery -A web worker [--detach] -l info -P eventlet(�`�Npermission)
+python3 -m celery -A web worker [--detach] -l info -P eventlet(注意permission)
 
-## ����uwsgi
+## 移除uwsgi
 sudo pkill -f uwsgi -9
